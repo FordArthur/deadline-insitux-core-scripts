@@ -28,21 +28,16 @@
 (on-gamemode-finished (fn
     (var called-callback? false)
     (var timer (time))
-    (var votes (-> pool  @(choose 3) @(map reverse [[] [] []]) dict))
-    (send-annoucement (str "next maps: " (join " " (keys votes))))))
-
-(var topic "" voted_map "") ; have to declare these, for some reason??
+    (var votes (-> pool  @(choose 3) #(map vec % [[] [] []]) dict))
+    (send-announcement (str "next maps: " (join " " (keys votes))))))
+(var topic "" voted_map "")
 (on-player-chatted (fn sender _ msg
     (let [topic voted_map] (split " " msg))
-    (if (> (- timer (time)) 20000)
-        (when (= topic "/vote")
+    (if (< (- (time) timer) 20000)
+        (when (and (= topic "/vote") (votes voted_map))
             (var votes (move voted_map sender votes)))
         (unless called-callback?
             (var callback-callback? true)
             (let winner ((reverse-dict votes) (-> votes keys (map len) (.. max))))
-            (send-annoucement "next map: " winner)
+            (send-announcement "next map: " winner)
             (set-map winner)))))
-
-(reset)
-(kill-on-heartbeat)
-
